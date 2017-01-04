@@ -54,7 +54,7 @@
               ((0 1) (run0 code (cons ((op2 (vector-ref code (+ pc 1)))
                                        (car lst) (cadr lst)) (cddr lst))
                            ast cst (+ pc 2)))))
-        ((3) (run0 code (cons (if (car lst) 1 0) (cdr lst)) cst (+ pc 1)))
+        ((3) (run0 code (cons (if (car lst) 1 0) (cdr lst)) ast cst (+ pc 1)))
         ((4) (run0 code (cons (vector-ref code (vector-ref code (+ pc 1))) lst)
                    ast cst (+ pc 2)))
         ((5) (run0 (begin0 code
