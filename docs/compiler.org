@@ -1,0 +1,80 @@
+* Compiling PL/0
+
+** Stack frame layout
+
+One must first understand PL/0's stack frame layout:
+
+#+BEGIN_SRC
+          +---------------------+
+  BASE--> |    STATIC LINK      |
+          +---------------------+
+          | DYNAMIC LINK (BASE) |
+          +---------------------+
+          |    RETURN ADDR.     |
+          +---------------------+
+  STK --> |         ...         |
+#+END_SRC
+
+If you are familiar with C stack frame you'll notice there's one more field. A C stack frame's "metadata" only contains the base pointer (the "DYNAMIC LINK" in the diagram above) and the return address; so what's this "STATIC LINK" about? The answer is that this is set up to accomodate PL/0's support for nested procedures. Consider this example:
+
+#+BEGIN_SRC pascal
+  procedure A;
+    var a;
+    procedure B;
+      var b;
+      procedure C;
+        var c;
+      begin
+        call B; {<-- POINT}
+      end;
+    begin
+      call C;
+    end;
+  begin
+    call B;
+  end; {A}
+#+END_SRC
+
+Consider the stack frame at point =POINT= when we don't have static link; it would look like this:
+
+#+BEGIN_SRC
++ stack frame of A
+  + base of A
+  + return addr of A
+  + variable `a`
++ stack frame of B
+  + base of B
+  + return addr of B
+  + variable `b`
++ stack frame of C
+  + base of C
+  + return addr of C
+  + variable `c`
+#+END_SRC
+
+If we called =B= in =C= again:
+
+#+BEGIN_SRC
++ stack frame of A
+  + base of A
+  + return addr of A
+  + variable `a`
++ stack frame of B
+  + base of B
+  + return addr of B
+  + variable `b`
++ stack frame of C
+  + base of C
+  + return addr of C
+  + variable `c`
++ stack frame of B (second time)
+  + base of B
+  + return addr of B
+  + variable `b`
+#+END_SRC
+
+How do we want to access the variable =a=, defined in procedure =A=, in =B=? For the first call to =B=, this is easy: you just go down one level of stack frame, but for the second call to =B= you'll have no way to know how many levels do you need go down. This is why we need static link in PL/0 stack frame; this field does not point to the "last" stack frame but point to the "parent" stack frame. One cannot define nested procedure in C, thus static link is not needed in C. The =CAL= instruction traces along this field to find the correct parent up the parenting (?) chain.
+
+(for explanations of other part see the comments in src/pl0.nim)
+
+
