@@ -253,7 +253,7 @@ proc parseStatement(x: ParserState): Option[Statement] =
     # empty statements too.
     while not x.skipWhite.peek("end"):
       var sep = x.expect(";")
-      if sep.isNone(): continue
+      if sep.isNone(): x.raiseErrorWithReason("Statement, semicolon or \"end\" expected.")
       var nextStatement = none(Statement)
       try:
         nextStatement = x.skipWhite.parseStatement
